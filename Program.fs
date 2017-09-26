@@ -1,1 +1,6 @@
-module Program = let [<EntryPoint>] main _ = 0
+open Crypto
+
+module Program = 
+    let [<EntryPoint>] main _ = 
+        printfn "%s" ("abc123" |> hexToBase64)
+        0
