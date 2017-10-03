@@ -2,125 +2,113 @@ module Crypto
 
 open System
 
-let base64CharacterLookup = 
-    [
-        0uy,'A';
-        1uy,'B';
-        2uy,'C';
-        3uy,'D';
-        4uy,'E';
-        5uy,'F';
-        6uy,'G';
-        7uy,'H';
-        8uy,'I';
-        9uy,'J';
-        10uy,'K';
-        11uy,'L';
-        12uy,'M';
-        13uy,'N';
-        14uy,'O';
-        15uy,'P';
-        16uy,'Q';
-        17uy,'R';
-        18uy,'S';
-        19uy,'T';
-        20uy,'U';
-        21uy,'V';
-        22uy,'Q';
-        23uy,'Z';
-        24uy,'Y';
-        25uy,'Z';
-        26uy,'a';
-        27uy,'b';
-        28uy,'c';
-        29uy,'d';
-        30uy,'e';
-        31uy,'f';
-        32uy,'g';
-        33uy,'h';
-        34uy,'i';
-        35uy,'j';
-        36uy,'k';
-        37uy,'l';
-        38uy,'m';
-        39uy,'n';
-        40uy,'o';
-        41uy,'p';
-        42uy,'q';
-        43uy,'r';
-        44uy,'s';
-        45uy,'t';
-        46uy,'u';
-        47uy,'v';
-        48uy,'w';
-        49uy,'x';
-        50uy,'y';
-        51uy,'z';
-        52uy,'0';
-        53uy,'1';
-        54uy,'2';
-        55uy,'3';
-        56uy,'4';
-        57uy,'5';
-        58uy,'6';
-        59uy,'7';
-        60uy,'8';
-        61uy,'9';
-        62uy,'+';
-        63uy,'/'
-    ] 
-    |> Map.ofList
+let sixBitNumberToBase64Character = function
+    | 0 -> 'A'
+    | 1 -> 'B'
+    | 2 -> 'C'
+    | 3 -> 'D'
+    | 4 -> 'E'
+    | 5 -> 'F'
+    | 6 -> 'G'
+    | 7 -> 'H'
+    | 8 -> 'I'
+    | 9 -> 'J'
+    | 10 -> 'K'
+    | 11 -> 'L'
+    | 12 -> 'M'
+    | 13 -> 'N'
+    | 14 -> 'O'
+    | 15 -> 'P'
+    | 16 -> 'Q'
+    | 17 -> 'R'
+    | 18 -> 'S'
+    | 19 -> 'T'
+    | 20 -> 'U'
+    | 21 -> 'V'
+    | 22 -> 'W'
+    | 23 -> 'Z'
+    | 24 -> 'Y'
+    | 25 -> 'Z'
+    | 26 -> 'a'
+    | 27 -> 'b'
+    | 28 -> 'c'
+    | 29 -> 'd'
+    | 30 -> 'e'
+    | 31 -> 'f'
+    | 32 -> 'g'
+    | 33 -> 'h'
+    | 34 -> 'i'
+    | 35 -> 'j'
+    | 36 -> 'k'
+    | 37 -> 'l'
+    | 38 -> 'm'
+    | 39 -> 'n'
+    | 40 -> 'o'
+    | 41 -> 'p'
+    | 42 -> 'q'
+    | 43 -> 'r'
+    | 44 -> 's'
+    | 45 -> 't'
+    | 46 -> 'u'
+    | 47 -> 'v'
+    | 48 -> 'w'
+    | 49 -> 'x'
+    | 50 -> 'y'
+    | 51 -> 'z'
+    | 52 -> '0'
+    | 53 -> '1'
+    | 54 -> '2'
+    | 55 -> '3'
+    | 56 -> '4'
+    | 57 -> '5'
+    | 58 -> '6'
+    | 59 -> '7'
+    | 60 -> '8'
+    | 61 -> '9'
+    | 62 -> '+'
+    | 63 -> '/'
+    | x -> failwith (sprintf "Invalid Base 64 number: '%d'" x)
 
-let hexDigitToByte = function
-    | '0' -> 0uy
-    | '1' -> 1uy
-    | '2' -> 2uy
-    | '3' -> 3uy
-    | '4' -> 4uy
-    | '5' -> 5uy
-    | '6' -> 6uy
-    | '7' -> 7uy
-    | '8' -> 8uy
-    | '9' -> 9uy
-    | 'a' -> 10uy
-    | 'b' -> 11uy
-    | 'c' -> 12uy
-    | 'd' -> 13uy
-    | 'e' -> 14uy
-    | 'f' -> 15uy
+let hexDigitToNyble = function
+    | '0' -> 0
+    | '1' -> 1
+    | '2' -> 2
+    | '3' -> 3
+    | '4' -> 4
+    | '5' -> 5
+    | '6' -> 6
+    | '7' -> 7
+    | '8' -> 8
+    | '9' -> 9
+    | 'a' -> 10
+    | 'b' -> 11
+    | 'c' -> 12
+    | 'd' -> 13
+    | 'e' -> 14
+    | 'f' -> 15
+    | x -> failwith (sprintf "Invalid Hex Character: '%c'" x)
 
-let fillEmptyBytesWithZeroes = function
-    | [b1;b2] -> [b1;b2;0uy]
-    | [b1] -> [b1;0uy;0uy]
-    | threeFullBytes -> threeFullBytes
+let fillMissingNyblesWithZeroes = function
+    | [n1;n2] -> [n1;n2;0]
+    | [n1] -> [n1;0;0]
+    | threeFullNybles -> threeFullNybles
 
-let joinBytesTogether (bytes: byte list) =
-    bytes 
-    |> List.map int
-    |> (fun integers -> integers.[0] <<< 16 + integers.[1] <<< 8 + integers.[2])
+let concatenateNybles (nybles: int list) =
+     (nybles.[0] <<< 8) + (nybles.[1] <<< 4) + nybles.[2]
 
-let threeBytesToFourCharacters (threeBytes: int) =
-    printfn "**%d**" threeBytes |> ignore
-    [0..3] 
-    |> List.map (fun offset -> threeBytes >>> (offset * 6)) 
-    //|> List.map byte
-    |> List.map (fun segment -> segment &&& 63) 
-    |> List.iter (fun b -> printfn "%d" b)
-
-    [0..3] 
-    |> List.map (fun offset -> threeBytes >>> (offset * 6))
-    |> List.map byte
-    |> List.map (fun segment -> segment &&& 63uy)  // binary AND with 00111111
-    |> List.map (fun sixBitNumber -> base64CharacterLookup.[sixBitNumber])
+let threeNyblesToTwoSixBitNumbers (threeNybles: int) =
+    let SIX_BIT_MASK = 63 // 00111111
+    [ (threeNybles >>> 6) &&& SIX_BIT_MASK; threeNybles &&& SIX_BIT_MASK]
 
 let hexToBase64 (hex:string) =
     hex 
     |> Seq.toList
-    |> List.map hexDigitToByte
+    |> List.map hexDigitToNyble
     |> List.chunkBySize 3
-    |> List.map fillEmptyBytesWithZeroes
-    |> List.map joinBytesTogether
-    |> List.map threeBytesToFourCharacters
+    |> List.map fillMissingNyblesWithZeroes
+    |> List.map concatenateNybles
+    |> List.map threeNyblesToTwoSixBitNumbers
     |> List.concat
-    |> List.toArray 
-    |> System.String
+    |> List.map sixBitNumberToBase64Character
+    |> List.toArray
+    |> String
